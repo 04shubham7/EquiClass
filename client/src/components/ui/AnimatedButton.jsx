@@ -89,13 +89,13 @@ export default function AnimatedButton({
 
   const variantClasses = {
     primary:
-      'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 focus-visible:ring-slate-900 dark:focus-visible:ring-white',
+      'border border-transparent bg-[var(--eq-text)] text-[var(--eq-bg-soft)] shadow-[0_18px_34px_rgba(24,34,32,0.14)] hover:bg-[var(--eq-accent-strong)] focus-visible:ring-[var(--eq-accent)]',
     secondary:
-      'bg-white text-slate-900 border border-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-white dark:border-slate-600 dark:hover:bg-slate-700 focus-visible:ring-slate-500',
+      'border border-[var(--eq-border)] bg-[var(--eq-surface-strong)] text-[var(--eq-text)] hover:bg-[var(--eq-surface-muted)] focus-visible:ring-[var(--eq-accent)]',
     ghost:
-      'bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 focus-visible:ring-slate-500',
+      'border border-transparent bg-[var(--eq-accent-soft)] text-[var(--eq-accent-strong)] hover:bg-[rgba(47,95,90,0.18)] focus-visible:ring-[var(--eq-accent)]',
     danger:
-      'bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-500',
+      'border border-transparent bg-[var(--eq-danger)] text-white hover:bg-[#823844] focus-visible:ring-[var(--eq-danger)]',
   };
 
   const sizeClasses = {

@@ -1,55 +1,38 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
-import Dashboard from './components/Dashboard';
-import AuthScreen from './components/AuthScreen';
-import TimetableOnboarding from './components/TimetableOnboarding';
-import { FullPageLoader } from './components/ui/Skeleton';
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const AuthScreen = lazy(() => import('./components/AuthScreen'));
+const TimetableOnboarding = lazy(() => import('./components/TimetableOnboarding'));
 import NetworkStatus from './components/ui/NetworkStatus';
 import { KeyboardShortcuts, SkipLink } from './components/ui/KeyboardShortcuts';
 import { ToastContainer } from './components/ui/Toast';
-import PWAUpdatePrompt, { InstallPrompt, usePWAUpdate } from './components/ui/PWAUpdatePrompt';
+import PWAUpdatePrompt, { InstallPrompt } from './components/ui/PWAUpdatePrompt';
 import { gsap } from 'gsap';
-import { prefersReducedMotion, pageIn } from './utils/animation';
+import { getAnimationProfile, pageIn, setDocumentMotionMode, tuneAnimation } from './utils/animation';
 import { useKeyboardShortcut } from './hooks/useKeyboardNavigation';
+import { usePWAUpdate } from './hooks/usePWAUpdate';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
-
-// Toast state management
-let toastListeners = [];
-let toastId = 0;
-
-export function showToast(message, type = 'info', action) {
-  const id = ++toastId;
-  const toast = { id, message, type, action };
-  toastListeners.forEach((listener) => listener([toast, ...getToasts()]));
-  return id;
-}
-
-function getToasts() {
-  // This is a simple getter - in real implementation, track toasts array
-  return [];
-}
-
-export function dismissToast(id) {
-  toastListeners.forEach((listener) =>
-    listener((toasts) => toasts.filter((t) => t.id !== id))
-  );
-}
+import { showToast, subscribeToasts } from './lib/toastBus';
+import { Analytics } from '@vercel/analytics/react';
 
 function LoadingScreen() {
   const contentRef = useRef(null);
 
   useEffect(() => {
     const content = contentRef.current;
-    if (!content || prefersReducedMotion()) return;
+    if (!content) return;
 
-    pageIn(content, { duration: 0.4 });
+    const profile = getAnimationProfile();
+    if (profile.reduced) return;
+
+    pageIn(content, tuneAnimation({ duration: 0.4, y: 20 }, profile));
   }, []);
 
   return (
     <div ref={contentRef} className="loading-shell grid min-h-screen place-items-center px-4">
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center">
+      <div className="app-panel rounded-[2rem] px-8 py-10 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--eq-border)] bg-[var(--eq-surface-muted)]">
           <svg
             className="h-8 w-8 animate-spin text-slate-400"
             viewBox="0 0 24 24"
@@ -66,9 +49,21 @@ function LoadingScreen() {
             />
           </svg>
         </div>
-        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-          Initializing ClassSwap session...
+        <p className="section-kicker">EquiClass</p>
+        <p className="mt-2 text-sm font-medium text-[var(--eq-muted)]">
+          Initializing your EquiClass workspace...
         </p>
+      </div>
+    </div>
+  );
+}
+
+function ViewFallback() {
+  return (
+    <div className="loading-shell grid min-h-screen place-items-center px-4">
+      <div className="app-panel rounded-[2rem] px-6 py-8 text-center">
+        <p className="section-kicker">Loading view</p>
+        <p className="mt-2 text-sm font-medium text-[var(--eq-muted)]">Preparing your workspace...</p>
       </div>
     </div>
   );
@@ -79,16 +74,17 @@ function AppShell() {
   const { isDark, toggleTheme } = useTheme();
   const [toasts, setToasts] = useState([]);
   const contentRef = useRef(null);
-  const { isOffline } = useNetworkStatus();
+  useNetworkStatus();
   const { needRefresh, closePrompt } = usePWAUpdate();
   const [showInstallPrompt, setShowInstallPrompt] = useState(true);
 
+  useEffect(() => {
+    setDocumentMotionMode();
+  }, []);
+
   // Register toast listener
   useEffect(() => {
-    toastListeners.push(setToasts);
-    return () => {
-      toastListeners = toastListeners.filter((l) => l !== setToasts);
-    };
+    return subscribeToasts(setToasts);
   }, []);
 
   // Keyboard shortcuts
@@ -108,15 +104,38 @@ function AppShell() {
 
   const viewKey = getViewKey();
 
+  useEffect(() => {
+    if (isInitializing) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      void import('./components/TimetableOnboarding');
+      void import('./components/Dashboard');
+      return;
+    }
+
+    if (!user?.onboardingCompleted) {
+      void import('./components/Dashboard');
+      return;
+    }
+
+    void import('./components/RequestSubstituteModal');
+    void import('./components/routine/RoutineSection');
+  }, [isAuthenticated, isInitializing, user?.onboardingCompleted]);
+
   // Animate content changes
   useEffect(() => {
     const content = contentRef.current;
-    if (!content || prefersReducedMotion()) return;
+    if (!content) return;
+
+    const profile = getAnimationProfile();
+    if (profile.reduced) return;
 
     gsap.fromTo(
       content,
       { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out', delay: 0.1 }
+      tuneAnimation({ opacity: 1, y: 0, duration: 0.4, ease: 'power2.out', delay: 0.1 }, profile)
     );
   }, [viewKey]);
 
@@ -151,7 +170,9 @@ function AppShell() {
       <NetworkStatus />
       <div className="relative min-h-screen" id="main-content">
         <ThemeToggleButton isDark={isDark} onToggle={toggleTheme} />
-        <div ref={contentRef} key={viewKey}>{content}</div>
+        <div ref={contentRef} key={viewKey}>
+          <Suspense fallback={<ViewFallback />}>{content}</Suspense>
+        </div>
       </div>
       <KeyboardShortcuts />
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
@@ -173,6 +194,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <AppShell />
+        <Analytics />
       </AuthProvider>
     </ThemeProvider>
   );
@@ -183,18 +205,18 @@ function ThemeToggleButton({ isDark, onToggle }) {
     <button
       type="button"
       onClick={onToggle}
-      className="theme-toggle-button fixed right-4 top-4 z-60 inline-flex items-center gap-3 rounded-full border border-slate-300 bg-white/80 px-3 py-2 text-xs font-semibold text-slate-800 shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white"
+      className="theme-toggle-button fixed right-4 top-4 z-60 inline-flex items-center gap-3 rounded-full border px-3 py-2 text-xs font-semibold backdrop-blur transition hover:-translate-y-0.5"
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       <span
         className={`theme-toggle-track relative inline-flex h-6 w-11 items-center rounded-full border transition duration-500 ${
-          isDark ? 'border-slate-600 bg-slate-800' : 'border-slate-200 bg-slate-100'
+          isDark ? 'border-white/10 bg-white/10' : 'border-black/10 bg-black/5'
         }`}
         aria-hidden="true"
       >
         <span
-          className={`theme-toggle-thumb inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-500 ease-out ${
+          className={`theme-toggle-thumb inline-block h-4 w-4 rounded-full bg-[var(--eq-surface-strong)] shadow-sm transition-transform duration-500 ease-out ${
             isDark ? 'translate-x-6' : 'translate-x-1'
           }`}
         />

@@ -2,7 +2,7 @@
  * NetworkStatus component - shows online/offline status
  * Appears when connection changes
  */
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { gsap } from 'gsap';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { prefersReducedMotion } from '../../utils/animation';

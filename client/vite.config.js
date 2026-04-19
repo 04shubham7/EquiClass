@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import process from 'node:process'
 
 const apiProxyTarget = process.env.VITE_DEV_API_PROXY_TARGET || 'http://localhost:5000'
 
@@ -30,8 +31,6 @@ export default defineConfig({
         manualChunks: {
           // Vendor chunk for stable dependencies
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          // UI chunk for design system
-          ui: ['tailwindcss', '@tailwindcss/vite'],
           // Animation chunks
           animations: ['gsap'],
         },
@@ -58,11 +57,11 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'robots.txt'],
       manifest: {
         id: '/',
-        name: 'ClassSwap - Class Coverage Ledger',
-        short_name: 'ClassSwap',
-        description: 'Splitwise-style class coverage and ledger app for university professors.',
-        theme_color: '#0B3C5D',
-        background_color: '#0B3C5D',
+        name: 'EquiClass - Faculty Coverage Ledger',
+        short_name: 'EquiClass',
+        description: 'Faculty coverage ledger for transparent, low-friction class handoffs.',
+        theme_color: '#234542',
+        background_color: '#f6f1e8',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
@@ -174,10 +173,11 @@ export default defineConfig({
     }),
   ],
   optimizeDeps: {
-    include: ['react', 'react-dom', 'gsap'],
+    include: ['react', 'react-dom', 'gsap', '@vercel/analytics/react'],
     exclude: [],
   },
   resolve: {
+    dedupe: ['react', 'react-dom'],
     alias: {
       '@': '/src',
     },

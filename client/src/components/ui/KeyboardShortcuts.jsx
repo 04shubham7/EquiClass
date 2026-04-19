@@ -2,9 +2,9 @@
  * KeyboardShortcuts component - displays available shortcuts
  * Accessible via "?" key
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback,useRef } from 'react';
 import { gsap } from 'gsap';
-import { prefersReducedMotion } from '../../utils/animation';
+import { getAnimationProfile, tuneAnimation } from '../../utils/animation';
 
 const SHORTCUTS = [
   { key: '?', description: 'Show keyboard shortcuts' },
@@ -64,11 +64,12 @@ export function KeyboardShortcuts() {
     firstFocusable?.focus();
 
     // Animate in
-    if (!prefersReducedMotion()) {
+    const profile = getAnimationProfile();
+    if (!profile.reduced) {
       gsap.fromTo(
         modal,
         { opacity: 0, scale: 0.95 },
-        { opacity: 1, scale: 1, duration: 0.25, ease: 'power2.out' }
+        tuneAnimation({ opacity: 1, scale: 1, duration: 0.25, ease: 'power2.out' }, profile)
       );
     }
 
