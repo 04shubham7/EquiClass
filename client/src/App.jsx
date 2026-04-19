@@ -196,6 +196,7 @@ function App() {
       <AuthProvider>
         <AppShell />
         <Analytics />
+        <SpeedInsights />
       </AuthProvider>
     </ThemeProvider>
   );
