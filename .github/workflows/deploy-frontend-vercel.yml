@@ -42,10 +42,8 @@ jobs:
 
       - name: Pull Vercel Environment
         if: steps.vercel-config.outputs.configured == 'true'
-        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-        working-directory: client
+        run: vercel --cwd client pull --yes --environment=production --token="$VERCEL_TOKEN"
 
       - name: Deploy Frontend
         if: steps.vercel-config.outputs.configured == 'true'
-        run: vercel deploy --prod --token="$VERCEL_TOKEN"
-        working-directory: client
+        run: vercel --cwd client deploy --prod --token="$VERCEL_TOKEN"
