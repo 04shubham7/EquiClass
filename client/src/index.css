@@ -23,10 +23,63 @@ body {
 
 :root {
   color-scheme: light;
+  --theme-transition-duration: 420ms;
+  --theme-transition-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html[data-theme='dark'] {
   color-scheme: dark;
+}
+
+html.theme-transitioning body,
+html.theme-transitioning body * {
+  transition:
+    color var(--theme-transition-duration) var(--theme-transition-ease),
+    background-color var(--theme-transition-duration) var(--theme-transition-ease),
+    background var(--theme-transition-duration) var(--theme-transition-ease),
+    border-color 320ms var(--theme-transition-ease),
+    box-shadow 320ms var(--theme-transition-ease),
+    fill 320ms var(--theme-transition-ease),
+    stroke 320ms var(--theme-transition-ease);
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 70;
+}
+
+html.theme-transitioning[data-theme='dark'] body::after {
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.22), transparent 28%),
+    radial-gradient(circle at top left, rgba(16, 185, 129, 0.18), transparent 26%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.1) 0%, rgba(2, 6, 23, 0.32) 100%);
+  animation: themePulseDark 620ms var(--theme-transition-ease);
+}
+
+html.theme-transitioning[data-theme='light'] body::after {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.42), transparent 30%),
+    radial-gradient(circle at top left, rgba(186, 230, 253, 0.34), transparent 28%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.12) 0%, rgba(248, 250, 252, 0.5) 100%);
+  animation: themePulseLight 620ms var(--theme-transition-ease);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 520ms;
+  animation-timing-function: var(--theme-transition-ease);
+}
+
+html[data-theme='dark']::view-transition-new(root) {
+  animation-name: themeRevealDark;
+}
+
+html[data-theme='light']::view-transition-new(root) {
+  animation-name: themeRevealLight;
 }
 
 html[data-theme='dark'] body {
@@ -60,6 +113,10 @@ html[data-theme='dark'] .theme-toggle-button {
 
 html[data-theme='dark'] .theme-toggle-button:hover {
   background: rgba(30, 41, 59, 0.92);
+}
+
+html[data-theme='dark'] .theme-toggle-copy {
+  color: #e2e8f0;
 }
 
 html[data-theme='dark'] .auth-panel,
@@ -175,6 +232,94 @@ html[data-theme='dark'] .hero-metric .text-slate-600 {
 html[data-theme='dark'] .auth-panel .text-slate-100,
 html[data-theme='dark'] .dashboard-shell .text-slate-100 {
   color: #e2e8f0 !important;
+}
+
+html[data-theme='dark'] .text-slate-950,
+html[data-theme='dark'] .text-slate-900,
+html[data-theme='dark'] .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+html[data-theme='dark'] .text-slate-700,
+html[data-theme='dark'] .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme='dark'] .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+html[data-theme='dark'] .bg-slate-50,
+html[data-theme='dark'] .bg-slate-100 {
+  background-color: rgba(30, 41, 59, 0.88) !important;
+}
+
+html[data-theme='dark'] .bg-slate-800 {
+  background-color: rgba(30, 41, 59, 0.98) !important;
+}
+
+html[data-theme='dark'] .bg-slate-900,
+html[data-theme='dark'] .bg-slate-950 {
+  background-color: rgba(2, 6, 23, 0.98) !important;
+}
+
+html[data-theme='dark'] .bg-white,
+html[data-theme='dark'] .bg-white\/70,
+html[data-theme='dark'] .bg-white\/75,
+html[data-theme='dark'] .bg-white\/80,
+html[data-theme='dark'] .bg-white\/90 {
+  background-color: rgba(15, 23, 42, 0.9) !important;
+}
+
+html[data-theme='dark'] .border-slate-100,
+html[data-theme='dark'] .border-slate-200,
+html[data-theme='dark'] .border-slate-300,
+html[data-theme='dark'] .border-slate-600 {
+  border-color: rgba(71, 85, 105, 0.82) !important;
+}
+
+html[data-theme='dark'] .border-white\/50,
+html[data-theme='dark'] .border-white\/60,
+html[data-theme='dark'] .border-white\/70 {
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+html[data-theme='dark'] .bg-rose-50 {
+  background-color: rgba(190, 24, 93, 0.14) !important;
+}
+
+html[data-theme='dark'] .bg-rose-100 {
+  background-color: rgba(190, 24, 93, 0.18) !important;
+}
+
+html[data-theme='dark'] .bg-emerald-50 {
+  background-color: rgba(5, 150, 105, 0.14) !important;
+}
+
+html[data-theme='dark'] .bg-emerald-100 {
+  background-color: rgba(5, 150, 105, 0.2) !important;
+}
+
+html[data-theme='dark'] .bg-amber-100 {
+  background-color: rgba(217, 119, 6, 0.2) !important;
+}
+
+html[data-theme='dark'] .hover\:bg-slate-100:hover {
+  background-color: rgba(51, 65, 85, 0.9) !important;
+}
+
+html[data-theme='dark'] .hover\:bg-white:hover {
+  background-color: rgba(30, 41, 59, 0.92) !important;
+}
+
+html[data-theme='dark'] .focus\:border-slate-900:focus,
+html[data-theme='dark'] .focus\:border-slate-900:focus-visible {
+  border-color: rgba(125, 211, 252, 0.9) !important;
+}
+
+html[data-theme='dark'] .focus\:ring-slate-200:focus,
+html[data-theme='dark'] .focus\:ring-slate-200:focus-visible {
+  --tw-ring-color: rgba(56, 189, 248, 0.22) !important;
 }
 
 ::selection {
@@ -336,5 +481,51 @@ html[data-theme='dark'] .onboarding-shell {
   }
   100% {
     transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes themePulseDark {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes themePulseLight {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes themeRevealDark {
+  0% {
+    opacity: 0.7;
+    clip-path: circle(0% at 95% 4%);
+  }
+  100% {
+    opacity: 1;
+    clip-path: circle(150% at 95% 4%);
+  }
+}
+
+@keyframes themeRevealLight {
+  0% {
+    opacity: 0.7;
+    clip-path: circle(0% at 95% 4%);
+  }
+  100% {
+    opacity: 1;
+    clip-path: circle(150% at 95% 4%);
   }
 }

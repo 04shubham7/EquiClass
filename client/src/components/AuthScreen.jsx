@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 
 import { useAuth } from '../context/AuthContext';
+import AnimatedButton from './ui/AnimatedButton';
 
 const REGISTER_DEFAULT = {
   email: '',
@@ -307,18 +308,24 @@ function AuthScreen() {
                 </label>
 
                 {error && (
-                  <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                  <div
+                    className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+                    role="alert"
+                    aria-live="polite"
+                  >
                     {error}
                   </div>
                 )}
 
-                <button
+                <AnimatedButton
                   type="submit"
-                  disabled={isSubmitting}
-                  className="w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-950/20 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  size="lg"
+                  isLoading={isSubmitting}
+                  isError={!!error}
+                  className="w-full"
                 >
-                  {isSubmitting ? 'Please wait...' : mode === 'login' ? 'Login' : 'Register'}
-                </button>
+                  {mode === 'login' ? 'Login' : 'Register'}
+                </AnimatedButton>
               </form>
 
               <div className="mt-5 grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
