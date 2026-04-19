@@ -45,12 +45,7 @@ jobs:
         run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
         working-directory: client
 
-      - name: Build Frontend
-        if: steps.vercel-config.outputs.configured == 'true'
-        run: vercel build --prod --token="$VERCEL_TOKEN"
-        working-directory: client
-
       - name: Deploy Frontend
         if: steps.vercel-config.outputs.configured == 'true'
-        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        run: vercel deploy --prod --token="$VERCEL_TOKEN"
         working-directory: client
