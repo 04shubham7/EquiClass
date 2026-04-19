@@ -77,9 +77,12 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
 
+      - name: Prepare Remote Directory
+        run: |
+          ssh "$EC2_USERNAME@$EC2_HOST" "sudo mkdir -p /opt/equiclass && sudo chown -R $EC2_USERNAME:$EC2_USERNAME /opt/equiclass"
+
       - name: Copy Compose File
         run: |
-          ssh "$EC2_USERNAME@$EC2_HOST" "mkdir -p /opt/equiclass"
           scp deploy/docker-compose.ec2.yml "$EC2_USERNAME@$EC2_HOST:/opt/equiclass/docker-compose.yml"
 
       - name: Write Remote Environment File
@@ -96,6 +99,6 @@ jobs:
 
       - name: Deploy On EC2
         run: |
-          ssh "$EC2_USERNAME@$EC2_HOST" "echo '$GHCR_PAT' | docker login ghcr.io -u '$GHCR_USERNAME' --password-stdin"
-          ssh "$EC2_USERNAME@$EC2_HOST" "docker compose -f /opt/equiclass/docker-compose.yml --env-file /opt/equiclass/.env pull"
-          ssh "$EC2_USERNAME@$EC2_HOST" "docker compose -f /opt/equiclass/docker-compose.yml --env-file /opt/equiclass/.env up -d"
+          ssh "$EC2_USERNAME@$EC2_HOST" "echo '$GHCR_PAT' | sudo docker login ghcr.io -u '$GHCR_USERNAME' --password-stdin"
+          ssh "$EC2_USERNAME@$EC2_HOST" "sudo docker compose -f /opt/equiclass/docker-compose.yml --env-file /opt/equiclass/.env pull"
+          ssh "$EC2_USERNAME@$EC2_HOST" "sudo docker compose -f /opt/equiclass/docker-compose.yml --env-file /opt/equiclass/.env up -d"
