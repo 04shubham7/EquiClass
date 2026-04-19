@@ -199,129 +199,150 @@ function RequestSubstituteModal({ isOpen, onClose, onRequestCreated }) {
   }
 
   return (
-    <div className="modal-overlay fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4">
-      <div className="modal-panel mx-auto w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-semibold text-slate-900">Request A Substitute</h3>
+    <div className="modal-overlay fixed inset-0 z-50 overflow-y-auto bg-black/35 p-4 backdrop-blur-sm">
+      <div className="modal-panel mx-auto max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] p-6 shadow-xl">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <div className="app-tag">
+              <span className="h-2 w-2 rounded-full bg-[var(--eq-accent)]" />
+              EquiClass request
+            </div>
+            <h3 className="mt-4 text-2xl font-semibold text-[var(--eq-text)]">Request substitute coverage</h3>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--eq-muted)]">
+              Pick a colleague, verify the slot, and send a request with all the academic context attached.
+            </p>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+            className="app-button-secondary px-4 py-2 text-sm"
           >
             Close
           </button>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 rounded-[1.6rem] border border-[var(--eq-border)] bg-[var(--eq-surface-muted)] p-4 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Term</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">Term</label>
               <input
                 name="termId"
                 value={form.termId}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="app-input"
                 placeholder="2026-Spring"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Search Professor</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">Search professor</label>
               <input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                placeholder="Name or email"
+                className="app-input"
+                placeholder="Name, email, or employee ID"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-slate-700">Select Professor</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">Select professor</label>
               <select
                 name="covererId"
                 value={form.covererId}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="app-select"
                 required
                 disabled={isLoadingProfessors}
               >
                 <option value="">{isLoadingProfessors ? 'Loading professors...' : 'Choose a professor'}</option>
                 {professors.map((professor) => (
                   <option key={professor.id} value={professor.id}>
-                    {professor.fullName} ({professor.department})
+                    {professor.fullName} (ID: {professor.employeeCode || 'N/A'})
                   </option>
                 ))}
               </select>
+              {selectedProfessor && (
+                <div className="mt-2 rounded-xl border border-[var(--eq-border)] bg-[var(--eq-surface-strong)] px-3 py-2 text-xs text-[var(--eq-muted-strong)]">
+                  <p>
+                    Department: <span className="font-semibold text-[var(--eq-text)]">{selectedProfessor.department || 'Not specified'}</span>
+                  </p>
+                  <p className="mt-1">
+                    Employee ID: <span className="font-semibold text-[var(--eq-text)]">{selectedProfessor.employeeCode || 'N/A'}</span>
+                  </p>
+                </div>
+              )}
               {!isLoadingProfessors && professors.length === 0 && (
-                <p className="mt-1 text-xs text-amber-700">
+                <p className="mt-2 text-xs text-[var(--eq-warning)]">
                   {noProfessorMessage}
                 </p>
               )}
               {!isLoadingProfessors && professors.length > 0 && (
-                <p className="mt-1 text-xs text-slate-500">
-                  Your own account is excluded from this list by design.
+                <p className="mt-2 text-xs text-[var(--eq-muted)]">
+                  Any professor from your college can be selected, including different departments. Your own account is excluded.
                 </p>
               )}
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 rounded-[1.6rem] border border-[var(--eq-border)] bg-[var(--eq-surface-muted)] p-4 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Date</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">Date</label>
               <input
                 type="date"
                 name="date"
                 value={form.date}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="app-input"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Course Code</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">Course code</label>
               <input
                 name="courseCode"
                 value={form.courseCode}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="app-input"
                 placeholder="CS301"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Start Time</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">Start time</label>
               <input
                 type="time"
                 name="startTime"
                 value={form.startTime}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="app-input"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">End Time</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">End time</label>
               <input
                 type="time"
                 name="endTime"
                 value={form.endTime}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="app-input"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Routine Period (Fallback)</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">
+                Routine period
+              </label>
               <input
                 name="period"
                 value={form.period}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="app-input"
                 list="routine-period-options"
                 placeholder="Period_1"
                 required
@@ -334,67 +355,71 @@ function RequestSubstituteModal({ isOpen, onClose, onRequestCreated }) {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Room</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">Room</label>
               <input
                 name="room"
                 value={form.room}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="app-input"
                 placeholder="B-204"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Department</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">Department</label>
               <input
                 name="department"
                 value={form.department}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="app-input"
                 placeholder="Computer Science"
               />
             </div>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Reason</label>
+            <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">Reason</label>
             <input
               name="reason"
               value={form.reason}
               onChange={handleInputChange}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="app-input"
               placeholder="Medical leave"
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Comment</label>
+            <label className="mb-1.5 block text-sm font-medium text-[var(--eq-muted-strong)]">Comment</label>
             <textarea
               name="requesterComment"
               value={form.requesterComment}
               onChange={handleInputChange}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              className="app-textarea"
               rows={3}
               placeholder="Need cover for one class."
             />
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
-            <div className="mb-2 font-medium text-slate-800">Availability Check</div>
-            <p className="text-slate-600">
-              Selected: {selectedProfessor ? selectedProfessor.fullName : 'No professor selected'}
+          <div className="rounded-[1.6rem] border border-[var(--eq-border)] bg-[var(--eq-surface-muted)] p-4 text-sm">
+            <div className="mb-2 section-kicker">Availability check</div>
+            <p className="text-[var(--eq-muted)]">
+              Selected:{' '}
+              {selectedProfessor
+                ? `${selectedProfessor.fullName} (ID: ${selectedProfessor.employeeCode || 'N/A'})`
+                : 'No professor selected'}
             </p>
             {availability && (
               <div className="mt-2">
-                <p className="text-xs text-slate-500">
-                  Checked via: {availability.source === 'timetable_override' ? 'Date-specific timetable override' : 'Weekly routine fallback'}
+                <p className="text-xs text-[var(--eq-muted)]">
+                  Checked via:{' '}
+                  {availability.source === 'timetable_override' ? 'Date-specific timetable override' : 'Weekly routine fallback'}
                 </p>
-                <p className={availability.isFree ? 'text-emerald-700' : 'text-rose-700'}>
+                <p className={availability.isFree ? 'text-[var(--eq-success)]' : 'text-[var(--eq-danger)]'}>
                   {availability.isFree ? 'Professor is free for this slot.' : 'Professor is busy for this slot.'}
                 </p>
                 {!availability.isFree && availability.conflicts?.length > 0 && (
-                  <ul className="mt-1 list-disc pl-5 text-rose-700">
+                  <ul className="mt-1 list-disc pl-5 text-[var(--eq-danger)]">
                     {availability.conflicts.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
@@ -404,13 +429,13 @@ function RequestSubstituteModal({ isOpen, onClose, onRequestCreated }) {
             )}
           </div>
 
-          {error && <p className="text-sm text-rose-700">{error}</p>}
+          {error && <p className="text-sm text-[var(--eq-danger)]">{error}</p>}
 
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={checkAvailability}
-              className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60"
+              className="app-button-secondary"
               disabled={isCheckingAvailability}
             >
               {isCheckingAvailability ? 'Checking...' : 'Check Availability'}
@@ -418,7 +443,7 @@ function RequestSubstituteModal({ isOpen, onClose, onRequestCreated }) {
 
             <button
               type="submit"
-              className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
+              className="app-button-primary"
               disabled={isSubmitting || !availability?.isFree}
             >
               {isSubmitting ? 'Submitting...' : 'Send Request'}
