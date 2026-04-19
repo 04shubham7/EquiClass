@@ -1,13 +1,16 @@
 # Server API
 
-This folder contains the EquiClass backend: an Express API that handles authentication, timetable persistence, substitute request workflows, ledger accounting, and routine availability checks.
+![Release](https://img.shields.io/badge/Release-v1.1-234542?logo=vercel&logoColor=white)
+
+This folder contains the EquiClass backend: an Express API that handles authentication, college-aware onboarding, timetable persistence, substitute request workflows, ledger accounting, and routine availability checks.
 
 ## Responsibilities
 
 - register and authenticate professors
+- register and resolve colleges through unique institution codes
 - protect routes with JWT auth
 - store weekly timetables and onboarding completion
-- create and resolve substitute requests
+- create and resolve same-college substitute requests across departments
 - calculate ledger summaries and transaction history
 - manage weekly routine data
 
@@ -15,7 +18,7 @@ This folder contains the EquiClass backend: an Express API that handles authenti
 
 ```mermaid
 flowchart TD
-    A[Create request] --> B[Validate requester and coverer]
+    A[Create request] --> B[Validate requester, coverer, and college scope]
     B --> C[Check availability]
     C --> D{Coverer free?}
     D -- No --> E[Reject request creation]
@@ -46,6 +49,7 @@ flowchart TD
 | Group | Routes |
 | --- | --- |
 | Health | `GET /api/health` |
+| Colleges | `GET /api/colleges`, `POST /api/colleges/register` |
 | Auth | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` |
 | Timetable | `GET /api/timetables/me`, `PUT /api/timetables/me`, `POST /api/timetables/availability`, `POST /api/timetables/override-availability` |
 | Users | `GET /api/users` |
@@ -58,6 +62,12 @@ flowchart TD
 ```bash
 npm install
 npm run dev
+```
+
+If you are migrating older data into the college-aware setup, run:
+
+```bash
+npm run migrate:colleges
 ```
 
 Default local port:
@@ -86,5 +96,6 @@ Create `.env` from `.env.example` and configure:
 - [Dockerfile](Dockerfile) builds the production API image.
 - [.env.example](.env.example) documents the required runtime variables.
 - The production workflow deploys this API to EC2 through GitHub Actions and GHCR.
+- College-aware auth and request isolation are part of the shipped backend model.
 
 For deployment steps, see [../docs/Deployment.md](../docs/Deployment.md). For the full project overview, see [../README.md](../README.md).

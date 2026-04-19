@@ -1,6 +1,8 @@
 # EquiClass
 
-> EquiClass is the full-stack class coverage platform for faculty teams that need to coordinate substitute lectures, validate availability, and keep a transparent ledger of who owes whom a class.
+![Release](https://img.shields.io/badge/Release-v1.1-234542?logo=vercel&logoColor=white)
+
+> EquiClass is the college-aware class coverage platform for faculty teams that need to coordinate substitute lectures, validate availability, and keep a transparent ledger of who owes whom a class.
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
@@ -12,20 +14,31 @@
 
 ## Why EquiClass Exists
 
-Faculty scheduling breaks down quickly when leave requests, urgent coverage changes, and informal favors are managed through chat messages alone. EquiClass makes that workflow structured:
+Faculty scheduling breaks down quickly when leave requests, urgent coverage changes, and informal favors are managed through chat messages alone. EquiClass makes that workflow structured and college-aware:
 
 - **Requests stay auditable** instead of disappearing in chat threads.
 - **Availability is checked before acceptance** using timetable and routine data.
 - **Ledger balances remain transparent** so class debt is tracked fairly.
+- **Departments share the same college boundary** so professors can coordinate across departments without crossing institutions.
+- **Colleges are self-service** with unique institution codes and invite links.
 - **The app works well on mobile** as an installable PWA.
+
+## What’s New In v1.1
+
+- Multi-college registration with college codes and invite links
+- Same-college request boundaries with cross-department requests allowed
+- College onboarding, invite, and professor identity improvements in the UI
+- Lazy-loaded client screens, adaptive motion tuning, and Vercel Analytics integration
+- Updated deployment and documentation for the shipped setup
 
 ## Core Product Highlights
 
 | Area | What it does |
 | --- | --- |
-| Authentication | Sign up, sign in, restore session, and protect API routes with JWT auth |
+| Authentication | Sign up, sign in, restore session, select a college, and protect API routes with JWT auth |
+| College registry | Register a college, generate a unique code, and onboard professors through invite links |
 | Timetable onboarding | Collect recurring weekly teaching and busy slots before a user reaches the dashboard |
-| Substitute requests | Create, accept, decline, and cancel class coverage requests |
+| Substitute requests | Create, accept, decline, and cancel same-college class coverage requests across departments |
 | Ledger dashboard | Show what you owe, what others owe you, and your transaction history |
 | Routine editor | Maintain a weekly routine grid and validate availability against it |
 | Deployment | Run locally with Docker, deploy the frontend to Vercel, and run the API on EC2 |
@@ -38,6 +51,7 @@ flowchart LR
     Frontend -->|/api requests| Edge["Vercel Rewrite Layer"]
     Edge --> API["Express API on EC2<br/>Docker container"]
     API --> DB["MongoDB<br/>Atlas or local Docker"]
+    API --> College["College Registry<br/>Unique invite codes"]
     API --> Ledger["Ledger + Request Logic"]
     API --> Schedule["Timetable + Routine Validation"]
 ```
@@ -51,6 +65,9 @@ sequenceDiagram
     participant API as Express API
     participant DB as MongoDB
 
+    User->>UI: Select college or open invite link
+    UI->>API: GET /api/colleges or POST /api/colleges/register
+    API->>DB: Read/create college record
     User->>UI: Register or sign in
     UI->>API: POST /api/auth/register or /api/auth/login
     API->>DB: Create/read user
@@ -64,9 +81,9 @@ sequenceDiagram
     else User already onboarded
         UI-->>User: Open dashboard
     end
-    User->>UI: Create substitute request
+    User->>UI: Create substitute request to a professor in the same college
     UI->>API: POST /api/requests
-    API->>DB: Validate availability and save request
+    API->>DB: Validate availability and save request with college scope
     API-->>UI: Pending request
     User->>UI: Accept request
     UI->>API: PATCH /api/requests/:id/accept
@@ -95,6 +112,7 @@ EquiClass/
 - Tailwind CSS 4
 - GSAP animations
 - Context-based auth and theme state
+- Vercel Analytics
 - `vite-plugin-pwa` for installable app support
 
 ### Backend
@@ -198,11 +216,23 @@ Default ports:
 | `VITE_API_URL` | No | API base URL, defaults to `/api` |
 | `VITE_DEV_API_PROXY_TARGET` | No | Local Vite proxy target, defaults to `http://localhost:5000` |
 
+### Optional College Migration
+
+If you are moving older data into the college-aware model, run:
+
+```bash
+cd server
+npm run migrate:colleges
+```
+
+Use `--remove-users` only when you intentionally want to reset user data for a fresh college setup.
+
 ## API Surface
 
 | Domain | Endpoints |
 | --- | --- |
 | Health | `GET /api/health` |
+| Colleges | `GET /api/colleges`, `POST /api/colleges/register` |
 | Auth | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` |
 | Timetable | `GET /api/timetables/me`, `PUT /api/timetables/me`, `POST /api/timetables/availability`, `POST /api/timetables/override-availability` |
 | Users | `GET /api/users` |
@@ -260,7 +290,8 @@ Deployment details live in [docs/Deployment.md](docs/Deployment.md).
 
 The repository already includes:
 
-- a working client onboarding and dashboard flow
+- a working college-aware onboarding and dashboard flow
+- invite-link based college registration
 - substitute request handling
 - ledger summaries and transaction history endpoints
 - routine management endpoints and UI
