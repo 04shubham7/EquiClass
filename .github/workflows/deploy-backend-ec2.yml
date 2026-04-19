@@ -1,0 +1,81 @@
+name: Deploy Backend To EC2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - "server/**"
+      - "deploy/docker-compose.ec2.yml"
+      - ".github/workflows/deploy-backend-ec2.yml"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/equiclass-server
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: ${{ secrets.EC2_HOST != '' && secrets.EC2_SSH_PRIVATE_KEY != '' && secrets.EC2_USERNAME != '' && secrets.GHCR_USERNAME != '' && secrets.GHCR_PAT != '' && secrets.EC2_MONGO_URI != '' && secrets.EC2_JWT_SECRET != '' && secrets.EC2_CORS_ORIGIN != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Copy Compose File
+        run: |
+          ssh "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}" "mkdir -p /opt/equiclass"
+          scp deploy/docker-compose.ec2.yml "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/opt/equiclass/docker-compose.yml"
+
+      - name: Write Remote Environment File
+        run: |
+          cat > ec2.env <<EOF
+          SERVER_IMAGE=${{ env.IMAGE_NAME }}:latest
+          MONGO_URI=${{ secrets.EC2_MONGO_URI }}
+          JWT_SECRET=${{ secrets.EC2_JWT_SECRET }}
+          JWT_EXPIRES_IN=${{ secrets.EC2_JWT_EXPIRES_IN }}
+          CORS_ORIGIN=${{ secrets.EC2_CORS_ORIGIN }}
+          EOF
+          scp ec2.env "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/opt/equiclass/.env"
+          rm ec2.env
+
+      - name: Deploy On EC2
+        run: |
+          ssh "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}" "echo '${{ secrets.GHCR_PAT }}' | docker login ghcr.io -u '${{ secrets.GHCR_USERNAME }}' --password-stdin"
+          ssh "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}" "docker compose -f /opt/equiclass/docker-compose.yml --env-file /opt/equiclass/.env pull"
+          ssh "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}" "docker compose -f /opt/equiclass/docker-compose.yml --env-file /opt/equiclass/.env up -d"

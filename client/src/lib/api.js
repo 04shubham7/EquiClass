@@ -1,6 +1,6 @@
 import { tokenStore } from './tokenStore';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
 
 export const apiRequest = async (path, options = {}) => {
   const token = tokenStore.getToken();
