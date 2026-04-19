@@ -15,6 +15,7 @@ import { usePWAUpdate } from './hooks/usePWAUpdate';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
 import { showToast, subscribeToasts } from './lib/toastBus';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 function LoadingScreen() {
   const contentRef = useRef(null);
