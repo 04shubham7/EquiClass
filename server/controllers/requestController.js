@@ -120,6 +120,7 @@ const evaluateProfessorAvailability = async ({ covererId, termId, classEvent }) 
 const createRequest = async (req, res, next) => {
   try {
     const requesterId = req.user.id;
+    const requesterCollegeId = req.user.collegeId;
     const { covererId, termId, classEvent, reason, requesterComment, expiresAt } = req.body;
 
     if (!covererId || !termId || !classEvent) {
@@ -128,6 +129,16 @@ const createRequest = async (req, res, next) => {
         error: {
           code: 'VALIDATION_ERROR',
           message: 'covererId, termId, and classEvent are required',
+        },
+      });
+    }
+
+    if (!requesterCollegeId) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'COLLEGE_CONTEXT_REQUIRED',
+          message: 'Requester must belong to a college to create requests',
         },
       });
     }
@@ -173,13 +184,17 @@ const createRequest = async (req, res, next) => {
       });
     }
 
-    const coverer = await User.findById(covererId);
+    const coverer = await User.findOne({
+      _id: covererId,
+      isActive: true,
+      collegeId: requesterCollegeId,
+    });
     if (!coverer || !coverer.isActive) {
       return res.status(404).json({
         success: false,
         error: {
           code: 'COVERER_NOT_FOUND',
-          message: 'Selected coverer does not exist or is inactive',
+          message: 'Selected coverer does not exist in your college or is inactive',
         },
       });
     }
@@ -202,6 +217,7 @@ const createRequest = async (req, res, next) => {
     }
 
     const requestDoc = await Request.create({
+      collegeId: requesterCollegeId,
       requesterId,
       covererId,
       termId: String(termId).trim(),
@@ -241,6 +257,7 @@ const acceptRequest = async (req, res, next) => {
 
   try {
     const covererId = req.user.id;
+    const covererCollegeId = req.user.collegeId;
     const requestId = req.params.id;
     const covererComment = req.body?.covererComment;
 
@@ -261,6 +278,7 @@ const acceptRequest = async (req, res, next) => {
       const requestDoc = await Request.findOne({
         _id: requestId,
         covererId,
+        collegeId: covererCollegeId,
       }).session(session);
 
       if (!requestDoc) {
@@ -335,6 +353,7 @@ const acceptRequest = async (req, res, next) => {
 const getIncomingRequests = async (req, res, next) => {
   try {
     const covererId = req.user.id;
+    const collegeId = req.user.collegeId;
     const { status, termId, page = 1, limit = 20 } = req.query;
 
     const parsedPage = Math.max(Number(page) || 1, 1);
@@ -342,6 +361,7 @@ const getIncomingRequests = async (req, res, next) => {
 
     const filter = {
       covererId,
+      collegeId,
       ...(status ? { status: String(status).trim() } : {}),
       ...(termId ? { termId: String(termId).trim() } : {}),
     };
@@ -392,6 +412,7 @@ const getIncomingRequests = async (req, res, next) => {
 const getOutgoingRequests = async (req, res, next) => {
   try {
     const requesterId = req.user.id;
+    const collegeId = req.user.collegeId;
     const { status, termId, page = 1, limit = 20 } = req.query;
 
     const parsedPage = Math.max(Number(page) || 1, 1);
@@ -399,6 +420,7 @@ const getOutgoingRequests = async (req, res, next) => {
 
     const filter = {
       requesterId,
+      collegeId,
       ...(status ? { status: String(status).trim() } : {}),
       ...(termId ? { termId: String(termId).trim() } : {}),
     };
@@ -449,6 +471,7 @@ const getOutgoingRequests = async (req, res, next) => {
 const declineRequest = async (req, res, next) => {
   try {
     const covererId = req.user.id;
+    const covererCollegeId = req.user.collegeId;
     const requestId = req.params.id;
     const covererComment = req.body?.covererComment;
 
@@ -462,7 +485,11 @@ const declineRequest = async (req, res, next) => {
       });
     }
 
-    const requestDoc = await Request.findOne({ _id: requestId, covererId });
+    const requestDoc = await Request.findOne({
+      _id: requestId,
+      covererId,
+      collegeId: covererCollegeId,
+    });
 
     if (!requestDoc) {
       return res.status(404).json({
@@ -506,6 +533,7 @@ const declineRequest = async (req, res, next) => {
 const cancelRequest = async (req, res, next) => {
   try {
     const requesterId = req.user.id;
+    const requesterCollegeId = req.user.collegeId;
     const requestId = req.params.id;
     const requesterComment = req.body?.requesterComment;
 
@@ -519,7 +547,11 @@ const cancelRequest = async (req, res, next) => {
       });
     }
 
-    const requestDoc = await Request.findOne({ _id: requestId, requesterId });
+    const requestDoc = await Request.findOne({
+      _id: requestId,
+      requesterId,
+      collegeId: requesterCollegeId,
+    });
 
     if (!requestDoc) {
       return res.status(404).json({
