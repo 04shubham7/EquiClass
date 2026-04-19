@@ -280,15 +280,15 @@ function RoutineSection() {
   };
 
   return (
-    <section className="routine-panel mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="routine-panel mb-6 rounded-[1.9rem] p-5 sm:p-6">
       <RoutineToolbar
         onMarkAllFree={() => handleMarkAll(true)}
         onMarkAllBusy={() => handleMarkAll(false)}
         isSaving={isSaving || isLoading}
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-        <label htmlFor="newPeriodNumber" className="text-xs font-semibold text-slate-700">
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-[1.5rem] border border-[var(--eq-border)] bg-[var(--eq-surface-muted)] p-3">
+        <label htmlFor="newPeriodNumber" className="section-kicker">
           Add period number
         </label>
         <input
@@ -297,7 +297,7 @@ function RoutineSection() {
           min="1"
           value={newPeriodNumber}
           onChange={(event) => setNewPeriodNumber(event.target.value)}
-          className="w-24 rounded-md border border-slate-300 px-2 py-1 text-xs"
+          className="app-input w-24 px-3 py-2 text-sm"
           disabled={isSaving || isLoading}
           placeholder="e.g. 9"
         />
@@ -305,7 +305,7 @@ function RoutineSection() {
           type="button"
           onClick={handleAddPeriod}
           disabled={isSaving || isLoading}
-          className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+          className="app-button-secondary px-4 py-2 text-xs"
         >
           Add Period
         </button>
@@ -316,7 +316,7 @@ function RoutineSection() {
               type="button"
               onClick={() => handleRemovePeriod(periodKey)}
               disabled={isSaving || isLoading || periodKeys.length <= 1}
-              className="rounded border border-slate-300 px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+              className="app-button-secondary px-3 py-1.5 text-[11px]"
               title={`Remove ${periodKey}`}
             >
               Remove {periodKey}
@@ -329,7 +329,7 @@ function RoutineSection() {
       <FeedbackBanner error={error} success={success} />
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Loading routine...</p>
+        <p className="text-sm text-[var(--eq-muted)]">Loading routine...</p>
       ) : (
         <>
           <WeeklyRoutineGrid

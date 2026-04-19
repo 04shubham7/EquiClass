@@ -1,6 +1,6 @@
 # EquiClass
 
-> EquiClass is the repository behind **ClassSwap**: a full-stack class coverage platform for faculty teams that need to coordinate substitute lectures, validate availability, and keep a transparent ledger of who owes whom a class.
+> EquiClass is the full-stack class coverage platform for faculty teams that need to coordinate substitute lectures, validate availability, and keep a transparent ledger of who owes whom a class.
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
@@ -269,5 +269,5 @@ The repository already includes:
 
 ## Notes
 
-- The repository name is **EquiClass**, while the product experience and UI copy currently use **ClassSwap**.
+- The repository and product experience now use **EquiClass** consistently.
 - The docs in `docs/` include some earlier planning language; this README reflects the shipped JavaScript implementation in the repo today.

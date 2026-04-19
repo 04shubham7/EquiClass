@@ -1,11 +1,11 @@
-# ClassSwap - User Journey and Logic Flow
+# EquiClass - User Journey and Logic Flow
 
 This document describes the end-to-end flow for onboarding, class coverage requests, and ledger resolution.
 
 ## 1. New Professor Onboarding Flow
 
 ### 1.1 User Journey (Frontend + Backend)
-1. Professor opens ClassSwap web app or installed PWA.
+1. Professor opens the EquiClass web app or installed PWA.
 2. Professor clicks Sign Up and submits registration form.
 3. Frontend calls `POST /api/auth/register`.
 4. Backend validates payload, hashes password, creates user.

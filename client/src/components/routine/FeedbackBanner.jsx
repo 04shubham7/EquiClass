@@ -6,12 +6,12 @@ function FeedbackBanner({ error, success }) {
   return (
     <div className="mb-4 space-y-2">
       {error && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded-[1.3rem] border border-[rgba(154,68,80,0.2)] bg-[rgba(154,68,80,0.08)] px-4 py-3 text-sm text-[var(--eq-danger)]">
           {error}
         </div>
       )}
       {success && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <div className="rounded-[1.3rem] border border-[rgba(47,114,95,0.2)] bg-[rgba(47,114,95,0.08)] px-4 py-3 text-sm text-[var(--eq-success)]">
           {success}
         </div>
       )}

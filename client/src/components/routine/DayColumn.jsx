@@ -12,15 +12,15 @@ function DayColumn({
   isSaving,
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="landing-card rounded-[1.5rem] p-3 shadow-none">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold text-slate-800">{dayLabel}</h4>
+        <h4 className="text-sm font-semibold text-[var(--eq-text)]">{dayLabel}</h4>
         <div className="flex gap-1">
           <button
             type="button"
             onClick={() => onSetDay(dayKey, true)}
             disabled={isSaving}
-            className="rounded border border-emerald-300 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
+            className="app-button-secondary px-3 py-1.5 text-[10px]"
           >
             All Free
           </button>
@@ -28,7 +28,7 @@ function DayColumn({
             type="button"
             onClick={() => onSetDay(dayKey, false)}
             disabled={isSaving}
-            className="rounded border border-rose-300 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+            className="app-button-secondary px-3 py-1.5 text-[10px]"
           >
             All Busy
           </button>

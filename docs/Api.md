@@ -1,6 +1,6 @@
-# ClassSwap - REST API Specification
+# EquiClass - REST API Specification
 
-This document defines the RESTful endpoints for the ClassSwap MVP based on Plan.md.
+This document defines the RESTful endpoints for the EquiClass MVP based on Plan.md.
 
 ## 1. API Conventions
 
@@ -51,16 +51,22 @@ Common error codes:
 - HTTP Method: POST
 - Auth required: No
 
-Request payload:
+Request payload (college-aware):
 ```json
 {
 	"email": "a.prof@university.edu",
 	"password": "StrongPass#2026",
 	"fullName": "Prof A",
 	"department": "Computer Science",
-	"employeeCode": "CS-204"
+	"employeeCode": "CS-204",
+	"timezone": "Asia/Kolkata",
+	"collegeId": "663f1c2b9a3f3e0012aa0001"
 }
 ```
+
+Notes:
+- `collegeId` is preferred.
+- `collegeCode` is also accepted for backward compatibility.
 
 Expected response (201):
 ```json
@@ -69,6 +75,7 @@ Expected response (201):
 	"data": {
 		"user": {
 			"id": "663f1c2b9a3f3e0012aa1001",
+			"collegeId": "663f1c2b9a3f3e0012aa0001",
 			"email": "a.prof@university.edu",
 			"fullName": "Prof A",
 			"department": "Computer Science",
@@ -78,8 +85,7 @@ Expected response (201):
 		},
 		"tokens": {
 			"accessToken": "<jwt-access>",
-			"refreshToken": "<jwt-refresh>",
-			"expiresIn": 900
+			"expiresIn": "15m"
 		}
 	}
 }
@@ -90,13 +96,18 @@ Expected response (201):
 - HTTP Method: POST
 - Auth required: No
 
-Request payload:
+Request payload (college-aware):
 ```json
 {
 	"email": "a.prof@university.edu",
-	"password": "StrongPass#2026"
+	"password": "StrongPass#2026",
+	"collegeId": "663f1c2b9a3f3e0012aa0001"
 }
 ```
+
+Notes:
+- `collegeId` is preferred.
+- `collegeCode` is also accepted for backward compatibility.
 
 Expected response (200):
 ```json
@@ -105,6 +116,7 @@ Expected response (200):
 	"data": {
 		"user": {
 			"id": "663f1c2b9a3f3e0012aa1001",
+			"collegeId": "663f1c2b9a3f3e0012aa0001",
 			"email": "a.prof@university.edu",
 			"fullName": "Prof A",
 			"department": "Computer Science",
@@ -114,8 +126,7 @@ Expected response (200):
 		},
 		"tokens": {
 			"accessToken": "<jwt-access>",
-			"refreshToken": "<jwt-refresh>",
-			"expiresIn": 900
+			"expiresIn": "15m"
 		}
 	}
 }
@@ -136,6 +147,7 @@ Expected response (200):
 	"data": {
 		"user": {
 			"id": "663f1c2b9a3f3e0012aa1001",
+			"collegeId": "663f1c2b9a3f3e0012aa0001",
 			"email": "a.prof@university.edu",
 			"fullName": "Prof A",
 			"department": "Computer Science",
@@ -147,57 +159,77 @@ Expected response (200):
 }
 ```
 
-### 2.4 Refresh Access Token
-- Route URL: /api/auth/refresh
-- HTTP Method: POST
-- Auth required: No (requires valid refresh token)
+## 3. College Routes
 
-Request payload:
-```json
-{
-	"refreshToken": "<jwt-refresh>"
-}
-```
+### 3.1 List Active Colleges (Public)
+- Route URL: /api/colleges
+- HTTP Method: GET
+- Auth required: No
 
 Expected response (200):
 ```json
 {
 	"success": true,
 	"data": {
-		"tokens": {
-			"accessToken": "<new-jwt-access>",
-			"refreshToken": "<new-jwt-refresh>",
-			"expiresIn": 900
-		}
+		"items": [
+			{
+				"id": "663f1c2b9a3f3e0012aa0001",
+				"name": "National Institute of Technology",
+				"code": "NIT-8F4A"
+			}
+		],
+		"count": 1
 	}
 }
 ```
 
-### 2.5 Logout
-- Route URL: /api/auth/logout
+### 3.2 Register College/Institution (Public)
+- Route URL: /api/colleges/register
 - HTTP Method: POST
-- Auth required: Yes
+- Auth required: No
 
 Request payload:
 ```json
 {
-	"refreshToken": "<jwt-refresh>"
+	"name": "National Institute of Technology"
 }
 ```
 
-Expected response (200):
+Expected response when created (201):
 ```json
 {
 	"success": true,
 	"data": {
-		"message": "Logged out successfully"
+		"college": {
+			"id": "663f1c2b9a3f3e0012aa0001",
+			"name": "National Institute of Technology",
+			"code": "NIT-8F4A",
+			"isActive": true
+		},
+		"created": true
 	}
 }
 ```
 
-## 3. User and Timetable Routes
+Expected response when name already exists (200):
+```json
+{
+	"success": true,
+	"data": {
+		"college": {
+			"id": "663f1c2b9a3f3e0012aa0001",
+			"name": "National Institute of Technology",
+			"code": "NIT-8F4A",
+			"isActive": true
+		},
+		"created": false
+	}
+}
+```
 
-### 3.1 Save or Update My Timetable
+## 4. User and Timetable Routes
+
+### 4.1 Save or Update My Timetable
 - Route URL: /api/timetables/me
 - HTTP Method: PUT
 - Auth required: Yes
@@ -254,7 +286,7 @@ Expected response (200):
 }
 ```
 
-### 3.2 Get My Timetable
+### 4.2 Get My Timetable
 - Route URL: /api/timetables/me?termId=2026-Spring
 - HTTP Method: GET
 - Auth required: Yes
@@ -279,7 +311,7 @@ Expected response (200):
 }
 ```
 
-### 3.3 Fetch Professor Availability for a Class Slot
+### 4.3 Fetch Professor Availability for a Class Slot
 - Route URL: /api/timetables/availability
 - HTTP Method: POST
 - Auth required: Yes
