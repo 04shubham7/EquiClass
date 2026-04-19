@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const validator = require('validator');
 
+const College = require('../models/College');
 const User = require('../models/User');
+const { CODE_REGEX } = require('../utils/collegeCode');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
@@ -38,19 +41,76 @@ const sendAuthResponse = (res, statusCode, user) => {
 };
 
 const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+const normalizeCollegeCode = (code) => String(code || '').trim().toUpperCase();
+
+const resolveCollegeFromInput = async ({ collegeId, collegeCode, requireActive = true }) => {
+  if (collegeId) {
+    if (!mongoose.Types.ObjectId.isValid(collegeId)) {
+      return null;
+    }
+
+    return College.findOne({
+      _id: collegeId,
+      ...(requireActive ? { isActive: true } : {}),
+    });
+  }
+
+  const normalizedCollegeCode = normalizeCollegeCode(collegeCode);
+  if (!normalizedCollegeCode || !CODE_REGEX.test(normalizedCollegeCode)) {
+    return null;
+  }
+
+  return College.findOne({
+    code: normalizedCollegeCode,
+    ...(requireActive ? { isActive: true } : {}),
+  });
+};
+
+const listColleges = async (req, res, next) => {
+  try {
+    const colleges = await College.find({ isActive: true })
+      .select('name code')
+      .sort({ name: 1 })
+      .limit(500)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        items: colleges.map((college) => ({
+          id: college._id.toString(),
+          name: college.name,
+          code: college.code,
+        })),
+        count: colleges.length,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
 
 const register = async (req, res, next) => {
   try {
-    const { email, password, fullName, department, employeeCode, timezone } = req.body;
+    const {
+      email,
+      password,
+      fullName,
+      department,
+      employeeCode,
+      timezone,
+      collegeId,
+      collegeCode,
+    } = req.body;
 
     const normalizedEmail = normalizeEmail(email);
 
-    if (!normalizedEmail || !password || !fullName || !department) {
+    if (!normalizedEmail || !password || !fullName || !department || (!collegeId && !collegeCode)) {
       return res.status(400).json({
         success: false,
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'email, password, fullName, and department are required',
+          message: 'email, password, fullName, department, and collegeId or collegeCode are required',
         },
       });
     }
@@ -75,18 +135,34 @@ const register = async (req, res, next) => {
       });
     }
 
-    const existingUser = await User.findOne({ email: normalizedEmail });
+    const college = await resolveCollegeFromInput({ collegeId, collegeCode, requireActive: true });
+
+    if (!college) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'COLLEGE_NOT_FOUND',
+          message: 'Selected college was not found or is inactive',
+        },
+      });
+    }
+
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+      collegeId: college._id,
+    });
     if (existingUser) {
       return res.status(409).json({
         success: false,
         error: {
           code: 'EMAIL_ALREADY_EXISTS',
-          message: 'An account with this email already exists',
+          message: 'An account with this email already exists for the selected college',
         },
       });
     }
 
     const user = await User.create({
+      collegeId: college._id,
       email: normalizedEmail,
       password,
       fullName: fullName.trim(),
@@ -98,6 +174,38 @@ const register = async (req, res, next) => {
     return sendAuthResponse(res, 201, user);
   } catch (error) {
     if (error.code === 11000) {
+      const duplicateKey = Object.keys(error.keyPattern || {})[0];
+
+      if (duplicateKey === 'code') {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'COLLEGE_CODE_ALREADY_EXISTS',
+            message: 'College code already exists. Use a different unique code.',
+          },
+        });
+      }
+
+      if (duplicateKey === 'email') {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'EMAIL_ALREADY_EXISTS',
+            message: 'An account with this email already exists for the selected college',
+          },
+        });
+      }
+
+      if (duplicateKey === 'employeeCode') {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'EMPLOYEE_CODE_ALREADY_EXISTS',
+            message: 'Employee code already exists for the selected college',
+          },
+        });
+      }
+
       return res.status(409).json({
         success: false,
         error: {
@@ -113,26 +221,40 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, collegeId, collegeCode } = req.body;
     const normalizedEmail = normalizeEmail(email);
 
-    if (!normalizedEmail || !password) {
+    if (!normalizedEmail || !password || (!collegeId && !collegeCode)) {
       return res.status(400).json({
         success: false,
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'email and password are required',
+          message: 'email, password, and collegeId or collegeCode are required',
         },
       });
     }
 
-    const user = await User.findOne({ email: normalizedEmail }).select('+password');
+    const college = await resolveCollegeFromInput({ collegeId, collegeCode, requireActive: true });
+    if (!college) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid college code, email, or password',
+        },
+      });
+    }
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+      collegeId: college._id,
+    }).select('+password');
     if (!user) {
       return res.status(401).json({
         success: false,
         error: {
           code: 'INVALID_CREDENTIALS',
-          message: 'Invalid email or password',
+          message: 'Invalid college code, email, or password',
         },
       });
     }
@@ -153,7 +275,7 @@ const login = async (req, res, next) => {
         success: false,
         error: {
           code: 'INVALID_CREDENTIALS',
-          message: 'Invalid email or password',
+          message: 'Invalid college code, email, or password',
         },
       });
     }
@@ -168,6 +290,7 @@ const login = async (req, res, next) => {
 };
 
 module.exports = {
+  listColleges,
   register,
   login,
 };

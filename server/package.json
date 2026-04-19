@@ -1,11 +1,12 @@
 {
   "name": "classswap-server",
   "version": "1.0.0",
-  "description": "ClassSwap backend API",
+  "description": "EquiClass backend API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "migrate:colleges": "node scripts/migrate-colleges.js"
   },
   "engines": {
     "node": ">=20"
