@@ -7,7 +7,8 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const mongoose = require('mongoose');
 
-const { register, login } = require('./controllers/authController');
+const { listColleges, register, login } = require('./controllers/authController');
+const { registerCollege } = require('./controllers/collegeController');
 const {
   getMyTimetable,
   saveWeeklySchedule,
@@ -82,6 +83,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.get('/api/colleges', listColleges);
+app.post('/api/colleges/register', authLimiter, registerCollege);
 app.post('/api/auth/register', authLimiter, register);
 app.post('/api/auth/login', authLimiter, login);
 

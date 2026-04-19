@@ -207,6 +207,7 @@ const getMyTimetable = async (req, res, next) => {
 const checkProfessorAvailability = async (req, res, next) => {
   try {
     const { covererId, termId, classEvent } = req.body;
+    const requesterCollegeId = req.user.collegeId;
 
     if (!covererId || !termId || !classEvent) {
       return res.status(400).json({
@@ -248,6 +249,22 @@ const checkProfessorAvailability = async (req, res, next) => {
         error: {
           code: 'INVALID_CLASS_EVENT',
           message: 'classEvent has invalid dayOfWeek or time range',
+        },
+      });
+    }
+
+    const coverer = await User.findOne({
+      _id: covererId,
+      isActive: true,
+      collegeId: requesterCollegeId,
+    }).select('_id');
+
+    if (!coverer) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'COVERER_NOT_FOUND',
+          message: 'Selected professor does not exist in your college or is inactive',
         },
       });
     }
@@ -353,6 +370,7 @@ const checkProfessorAvailability = async (req, res, next) => {
 const checkDateOverrideAvailability = async (req, res, next) => {
   try {
     const { covererId, termId, classEvent } = req.body;
+    const requesterCollegeId = req.user.collegeId;
 
     if (!covererId || !termId || !classEvent) {
       return res.status(400).json({
@@ -392,6 +410,22 @@ const checkDateOverrideAvailability = async (req, res, next) => {
         error: {
           code: 'INVALID_CLASS_EVENT',
           message: 'classEvent has invalid time range',
+        },
+      });
+    }
+
+    const coverer = await User.findOne({
+      _id: covererId,
+      isActive: true,
+      collegeId: requesterCollegeId,
+    }).select('_id');
+
+    if (!coverer) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'COVERER_NOT_FOUND',
+          message: 'Selected professor does not exist in your college or is inactive',
         },
       });
     }

@@ -1,7 +1,7 @@
-# ClassSwap - Architecture & Development Plan
+# EquiClass - Architecture & Development Plan
 
 ## 1) Product Vision
-ClassSwap is a MERN-stack web app + PWA for university professors to manage class cover obligations, trade coverage fairly, and maintain a transparent ledger of who owes whom classes.
+EquiClass is a MERN-stack web app + PWA for university professors to manage class cover obligations, trade coverage fairly, and maintain a transparent ledger of who owes whom classes.
 
 Primary goals:
 - Prevent scheduling conflicts before coverage is accepted.

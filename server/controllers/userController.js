@@ -3,12 +3,13 @@ const User = require('../models/User');
 const listUsers = async (req, res, next) => {
   try {
     const me = req.user.id;
-    const { search, department } = req.query;
+    const collegeId = req.user.collegeId;
+    const { search } = req.query;
 
     const filter = {
       isActive: true,
+      collegeId,
       _id: { $ne: me },
-      ...(department ? { department: String(department).trim() } : {}),
     };
 
     if (search && String(search).trim()) {
@@ -16,11 +17,12 @@ const listUsers = async (req, res, next) => {
       filter.$or = [
         { fullName: { $regex: query, $options: 'i' } },
         { email: { $regex: query, $options: 'i' } },
+        { employeeCode: { $regex: query, $options: 'i' } },
       ];
     }
 
     const users = await User.find(filter)
-      .select('fullName email department')
+      .select('fullName email department employeeCode')
       .sort({ fullName: 1 })
       .limit(100)
       .lean();
@@ -33,6 +35,7 @@ const listUsers = async (req, res, next) => {
           fullName: user.fullName,
           email: user.email,
           department: user.department,
+          employeeCode: user.employeeCode || '',
         })),
         count: users.length,
       },

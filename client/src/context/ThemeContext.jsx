@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 const STORAGE_KEY = 'classswap-theme';
 const ThemeContext = createContext(null);
@@ -26,6 +27,7 @@ const getInitialTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(getInitialTheme);
+  const transitionTimeoutRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -33,12 +35,53 @@ export const ThemeProvider = ({ children }) => {
     window.localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
+  useEffect(() => {
+    return () => {
+      if (transitionTimeoutRef.current) {
+        window.clearTimeout(transitionTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+
+    if (typeof document === 'undefined') {
+      setTheme(nextTheme);
+      return;
+    }
+
+    const root = document.documentElement;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    root.classList.add('theme-transitioning');
+
+    if (transitionTimeoutRef.current) {
+      window.clearTimeout(transitionTimeoutRef.current);
+    }
+
+    transitionTimeoutRef.current = window.setTimeout(() => {
+      root.classList.remove('theme-transitioning');
+    }, prefersReducedMotion ? 0 : 650);
+
+    if (!prefersReducedMotion && typeof document.startViewTransition === 'function') {
+      document.startViewTransition(() => {
+        flushSync(() => {
+          setTheme(nextTheme);
+        });
+      });
+      return;
+    }
+
+    setTheme(nextTheme);
+  };
+
   const value = useMemo(
     () => ({
       theme,
       isDark: theme === 'dark',
       setTheme,
-      toggleTheme: () => setTheme((previous) => (previous === 'dark' ? 'light' : 'dark')),
+      toggleTheme,
     }),
     [theme]
   );

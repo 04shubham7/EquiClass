@@ -51,6 +51,21 @@ export const authApi = {
   },
 };
 
+export const collegesApi = {
+  list() {
+    return apiRequest('/colleges', {
+      method: 'GET',
+    });
+  },
+
+  register(data) {
+    return apiRequest('/colleges/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+};
+
 export const timetableApi = {
   getMy(termId) {
     const query = new URLSearchParams({ termId: String(termId) });
@@ -82,13 +97,10 @@ export const timetableApi = {
 };
 
 export const userApi = {
-  list({ search = '', department = '' } = {}) {
+  list({ search = '' } = {}) {
     const query = new URLSearchParams();
     if (search) {
       query.set('search', search);
-    }
-    if (department) {
-      query.set('department', department);
     }
 
     const suffix = query.toString() ? `?${query.toString()}` : '';

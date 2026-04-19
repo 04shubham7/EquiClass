@@ -2,15 +2,18 @@ function RoutineToolbar({ onMarkAllFree, onMarkAllBusy, isSaving }) {
   return (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">Weekly Routine</h3>
-        <p className="text-xs text-slate-500">Toggle each period between Free and Busy, then save changes.</p>
+        <p className="section-kicker">Recurring schedule</p>
+        <h3 className="mt-2 text-xl font-semibold text-[var(--eq-text)]">Weekly routine</h3>
+        <p className="mt-1 text-sm text-[var(--eq-muted)]">
+          Toggle each period between free and busy, then save the version you want requests to check against.
+        </p>
       </div>
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={onMarkAllFree}
           disabled={isSaving}
-          className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+          className="app-button-secondary px-4 py-2 text-xs"
         >
           Mark All Free
         </button>
@@ -18,7 +21,7 @@ function RoutineToolbar({ onMarkAllFree, onMarkAllBusy, isSaving }) {
           type="button"
           onClick={onMarkAllBusy}
           disabled={isSaving}
-          className="rounded-md border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
+          className="app-button-secondary px-4 py-2 text-xs"
         >
           Mark All Busy
         </button>

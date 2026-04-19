@@ -65,6 +65,11 @@ const availabilitySnapshotSchema = new mongoose.Schema(
 
 const requestSchema = new mongoose.Schema(
   {
+    collegeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'College',
+      index: true,
+    },
     requesterId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -130,6 +135,7 @@ const requestSchema = new mongoose.Schema(
 
 requestSchema.index({ requesterId: 1, status: 1, createdAt: -1 });
 requestSchema.index({ covererId: 1, status: 1, createdAt: -1 });
+requestSchema.index({ collegeId: 1, status: 1, createdAt: -1 });
 requestSchema.index({ termId: 1, 'classEvent.date': 1 });
 requestSchema.index({ status: 1, expiresAt: 1 });
 

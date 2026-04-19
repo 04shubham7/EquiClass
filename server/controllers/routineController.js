@@ -220,6 +220,7 @@ const updateRoutine = async (req, res, next) => {
 const checkRoutineAvailability = async (req, res, next) => {
   try {
     const { targetProfessorId, dayOfWeek, period } = req.body;
+    const requesterCollegeId = req.user.collegeId;
 
     if (!targetProfessorId || !dayOfWeek || !period) {
       return res.status(400).json({
@@ -263,7 +264,11 @@ const checkRoutineAvailability = async (req, res, next) => {
       });
     }
 
-    const professor = await User.findById(targetProfessorId).select('isActive');
+    const professor = await User.findOne({
+      _id: targetProfessorId,
+      isActive: true,
+      collegeId: requesterCollegeId,
+    }).select('isActive');
     if (!professor || !professor.isActive) {
       return res.status(404).json({
         success: false,
