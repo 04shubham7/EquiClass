@@ -34,7 +34,15 @@ const {
   updateRoutine,
   checkRoutineAvailability,
 } = require('./controllers/routineController');
-const { protect } = require('./middleware/auth');
+const {
+  getAdminOverview,
+  listCollegesForAdmin,
+  verifyCollege,
+  setCollegeActiveState,
+  listUsersForAdmin,
+  listAdminAuditLogs,
+} = require('./controllers/adminController');
+const { protect, requireRole } = require('./middleware/auth');
 
 const app = express();
 
@@ -117,6 +125,13 @@ app.get('/api/ledger/pairwise', protect, getPairwiseBalance);
 app.get('/api/routine/me', protect, getMyRoutine);
 app.put('/api/routine/update', protect, updateRoutine);
 app.post('/api/routine/check-availability', protect, checkRoutineAvailability);
+
+app.get('/api/admin/overview', protect, requireRole('global_admin'), getAdminOverview);
+app.get('/api/admin/colleges', protect, requireRole('global_admin'), listCollegesForAdmin);
+app.patch('/api/admin/colleges/:id/verify', protect, requireRole('global_admin'), verifyCollege);
+app.patch('/api/admin/colleges/:id/active', protect, requireRole('global_admin'), setCollegeActiveState);
+app.get('/api/admin/users', protect, requireRole('global_admin'), listUsersForAdmin);
+app.get('/api/admin/audit-logs', protect, requireRole('global_admin'), listAdminAuditLogs);
 
 app.use((req, res) => {
   res.status(404).json({

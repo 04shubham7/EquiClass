@@ -8,6 +8,7 @@ This folder contains the EquiClass backend: an Express API that handles authenti
 
 - register and authenticate professors
 - register and resolve colleges through unique institution codes
+- moderate new college submissions through a global admin approval queue
 - protect routes with JWT auth
 - store weekly timetables and onboarding completion
 - create and resolve same-college substitute requests across departments
@@ -56,6 +57,7 @@ flowchart TD
 | Requests | `POST /api/requests`, `GET /api/requests/incoming`, `GET /api/requests/outgoing`, `PATCH /api/requests/:id/accept`, `PATCH /api/requests/:id/decline`, `PATCH /api/requests/:id/cancel` |
 | Ledger | `GET /api/ledger/me/summary`, `GET /api/ledger/me/transactions`, `GET /api/ledger/pairwise` |
 | Routine | `GET /api/routine/me`, `PUT /api/routine/update`, `POST /api/routine/check-availability` |
+| Admin | `GET /api/admin/overview`, `GET /api/admin/colleges`, `PATCH /api/admin/colleges/:id/verify`, `PATCH /api/admin/colleges/:id/active`, `GET /api/admin/users`, `GET /api/admin/audit-logs` |
 
 ## Local Development
 
@@ -90,6 +92,7 @@ Create `.env` from `.env.example` and configure:
 | `JWT_SECRET` | Yes | JWT signing secret |
 | `JWT_EXPIRES_IN` | No | token expiry, defaults to `15m` |
 | `CORS_ORIGIN` | Yes in production | allowed frontend origin(s) |
+| `GLOBAL_ADMIN_EMAILS` | No | comma-separated emails that receive `global_admin` role on login/register |
 
 ## Deployment Notes
 
