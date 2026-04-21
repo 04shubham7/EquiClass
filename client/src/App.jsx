@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 const Dashboard = lazy(() => import('./components/Dashboard'));
+const GlobalAdminPanel = lazy(() => import('./components/GlobalAdminPanel'));
 const AuthScreen = lazy(() => import('./components/AuthScreen'));
 const TimetableOnboarding = lazy(() => import('./components/TimetableOnboarding'));
 const NetworkStatus = lazy(() => import('./components/ui/NetworkStatus'));
@@ -108,6 +109,7 @@ function AppShell() {
   const getViewKey = () => {
     if (isInitializing) return 'loading';
     if (!isAuthenticated) return 'auth';
+    if (Array.isArray(user?.roles) && user.roles.includes('global_admin')) return 'global-admin';
     if (!user?.onboardingCompleted) return 'onboarding';
     return 'dashboard';
   };
@@ -122,6 +124,11 @@ function AppShell() {
     if (!isAuthenticated) {
       void import('./components/TimetableOnboarding');
       void import('./components/Dashboard');
+      void import('./components/GlobalAdminPanel');
+      return;
+    }
+
+    if (Array.isArray(user?.roles) && user.roles.includes('global_admin')) {
       return;
     }
 
@@ -132,7 +139,7 @@ function AppShell() {
 
     void import('./components/RequestSubstituteModal');
     void import('./components/routine/RoutineSection');
-  }, [isAuthenticated, isInitializing, user?.onboardingCompleted]);
+  }, [isAuthenticated, isInitializing, user?.onboardingCompleted, user?.roles]);
 
   let content = null;
 
@@ -140,6 +147,8 @@ function AppShell() {
     content = <LoadingScreen />;
   } else if (!isAuthenticated) {
     content = <AuthScreen />;
+  } else if (Array.isArray(user?.roles) && user.roles.includes('global_admin')) {
+    content = <GlobalAdminPanel />;
   } else if (!user?.onboardingCompleted) {
     content = <TimetableOnboarding />;
   } else {
