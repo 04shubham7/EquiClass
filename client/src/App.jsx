@@ -1,37 +1,35 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const AuthScreen = lazy(() => import('./components/AuthScreen'));
 const TimetableOnboarding = lazy(() => import('./components/TimetableOnboarding'));
-import NetworkStatus from './components/ui/NetworkStatus';
-import { KeyboardShortcuts, SkipLink } from './components/ui/KeyboardShortcuts';
-import { ToastContainer } from './components/ui/Toast';
-import PWAUpdatePrompt, { InstallPrompt } from './components/ui/PWAUpdatePrompt';
-import { gsap } from 'gsap';
-import { getAnimationProfile, pageIn, setDocumentMotionMode, tuneAnimation } from './utils/animation';
+const NetworkStatus = lazy(() => import('./components/ui/NetworkStatus'));
+const KeyboardShortcuts = lazy(() =>
+  import('./components/ui/KeyboardShortcuts').then((module) => ({ default: module.KeyboardShortcuts }))
+);
+const ToastContainer = lazy(() =>
+  import('./components/ui/Toast').then((module) => ({ default: module.ToastContainer }))
+);
+const PWAUpdatePrompt = lazy(() => import('./components/ui/PWAUpdatePrompt'));
+const InstallPrompt = lazy(() =>
+  import('./components/ui/PWAUpdatePrompt').then((module) => ({ default: module.InstallPrompt }))
+);
+const Analytics = lazy(() =>
+  import('@vercel/analytics/react').then((module) => ({ default: module.Analytics }))
+);
+const SpeedInsights = lazy(() =>
+  import('@vercel/speed-insights/react').then((module) => ({ default: module.SpeedInsights }))
+);
+import SkipLink from './components/ui/SkipLink';
+import { setDocumentMotionMode } from './utils/motionProfile';
 import { useKeyboardShortcut } from './hooks/useKeyboardNavigation';
 import { usePWAUpdate } from './hooks/usePWAUpdate';
-import { useNetworkStatus } from './hooks/useNetworkStatus';
 import { showToast, subscribeToasts } from './lib/toastBus';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
 
 function LoadingScreen() {
-  const contentRef = useRef(null);
-
-  useEffect(() => {
-    const content = contentRef.current;
-    if (!content) return;
-
-    const profile = getAnimationProfile();
-    if (profile.reduced) return;
-
-    pageIn(content, tuneAnimation({ duration: 0.4, y: 20 }, profile));
-  }, []);
-
   return (
-    <div ref={contentRef} className="loading-shell grid min-h-screen place-items-center px-4">
+    <div className="loading-shell grid min-h-screen place-items-center px-4">
       <div className="app-panel rounded-[2rem] px-8 py-10 text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--eq-border)] bg-[var(--eq-surface-muted)]">
           <svg
@@ -74,8 +72,7 @@ function AppShell() {
   const { user, isAuthenticated, isInitializing } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [toasts, setToasts] = useState([]);
-  const contentRef = useRef(null);
-  useNetworkStatus();
+  const [showDeferredUI, setShowDeferredUI] = useState(false);
   const { needRefresh, closePrompt } = usePWAUpdate();
   const [showInstallPrompt, setShowInstallPrompt] = useState(true);
 
@@ -86,6 +83,18 @@ function AppShell() {
   // Register toast listener
   useEffect(() => {
     return subscribeToasts(setToasts);
+  }, []);
+
+  useEffect(() => {
+    const onIdle = () => setShowDeferredUI(true);
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(onIdle, { timeout: 1800 });
+      return () => window.cancelIdleCallback(idleId);
+    }
+
+    const timeoutId = window.setTimeout(onIdle, 1200);
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   // Keyboard shortcuts
@@ -125,21 +134,6 @@ function AppShell() {
     void import('./components/routine/RoutineSection');
   }, [isAuthenticated, isInitializing, user?.onboardingCompleted]);
 
-  // Animate content changes
-  useEffect(() => {
-    const content = contentRef.current;
-    if (!content) return;
-
-    const profile = getAnimationProfile();
-    if (profile.reduced) return;
-
-    gsap.fromTo(
-      content,
-      { opacity: 0, y: 20 },
-      tuneAnimation({ opacity: 1, y: 0, duration: 0.4, ease: 'power2.out', delay: 0.1 }, profile)
-    );
-  }, [viewKey]);
-
   let content = null;
 
   if (isInitializing) {
@@ -168,25 +162,56 @@ function AppShell() {
   return (
     <>
       <SkipLink />
-      <NetworkStatus />
       <div className="relative min-h-screen" id="main-content">
         <ThemeToggleButton isDark={isDark} onToggle={toggleTheme} />
-        <div ref={contentRef} key={viewKey}>
+        <div key={viewKey}>
           <Suspense fallback={<ViewFallback />}>{content}</Suspense>
         </div>
       </div>
-      <KeyboardShortcuts />
-      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
-      {needRefresh && (
-        <PWAUpdatePrompt
-          onAccept={handleUpdateAccept}
-          onDismiss={closePrompt}
-        />
-      )}
-      {showInstallPrompt && (
-        <InstallPrompt onDismiss={() => setShowInstallPrompt(false)} />
+      {showDeferredUI && (
+        <Suspense fallback={null}>
+          <NetworkStatus />
+          <KeyboardShortcuts />
+          <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+          {needRefresh && (
+            <PWAUpdatePrompt
+              onAccept={handleUpdateAccept}
+              onDismiss={closePrompt}
+            />
+          )}
+          {showInstallPrompt && (
+            <InstallPrompt onDismiss={() => setShowInstallPrompt(false)} />
+          )}
+        </Suspense>
       )}
     </>
+  );
+}
+
+function DeferredTelemetry() {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const onIdle = () => setEnabled(true);
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(onIdle, { timeout: 2500 });
+      return () => window.cancelIdleCallback(idleId);
+    }
+
+    const timeoutId = window.setTimeout(onIdle, 1800);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  if (!enabled) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <Analytics />
+      <SpeedInsights />
+    </Suspense>
   );
 }
 
@@ -195,7 +220,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <AppShell />
-        <Analytics />
+        <DeferredTelemetry />
       </AuthProvider>
     </ThemeProvider>
   );

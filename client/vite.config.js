@@ -40,8 +40,8 @@ export default defineConfig({
     reportCompressedSize: true,
     // Chunk size warning
     chunkSizeWarningLimit: 1000,
-    // Source maps for debugging (disable in production if needed)
-    sourcemap: true,
+    // Keep production payload lean.
+    sourcemap: false,
   },
   plugins: [
     tailwindcss(),
