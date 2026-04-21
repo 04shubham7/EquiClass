@@ -3,6 +3,12 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const GLOBAL_ADMIN_EMAILS = new Set(
+  String(process.env.GLOBAL_ADMIN_EMAILS || '')
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean)
+);
 
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET is not set in environment variables.');
@@ -20,6 +26,13 @@ const getTokenFromHeader = (authorizationHeader) => {
 
   return token;
 };
+
+const isGlobalAdminEmail = (email) => {
+  const normalized = String(email || '').trim().toLowerCase();
+  return Boolean(normalized) && GLOBAL_ADMIN_EMAILS.has(normalized);
+};
+
+const hasRole = (user, role) => Array.isArray(user?.roles) && user.roles.includes(role);
 
 const protect = async (req, res, next) => {
   try {
@@ -86,6 +99,35 @@ const protect = async (req, res, next) => {
   }
 };
 
+const requireRole = (...roles) => (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      error: {
+        code: 'UNAUTHORIZED',
+        message: 'Authentication is required',
+      },
+    });
+  }
+
+  const allowed = roles.some((role) => hasRole(req.user, role));
+
+  if (!allowed) {
+    return res.status(403).json({
+      success: false,
+      error: {
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to access this resource',
+      },
+    });
+  }
+
+  return next();
+};
+
 module.exports = {
   protect,
+  requireRole,
+  hasRole,
+  isGlobalAdminEmail,
 };
