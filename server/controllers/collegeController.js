@@ -6,6 +6,10 @@ const mapCollege = (college) => ({
   name: college.name,
   code: college.code,
   isActive: college.isActive,
+  verificationStatus: college.verificationStatus || 'approved',
+  verificationNote: college.verificationNote || '',
+  verifiedBy: college.verifiedBy ? college.verifiedBy.toString() : null,
+  verifiedAt: college.verifiedAt,
   createdAt: college.createdAt,
   updatedAt: college.updatedAt,
 });
@@ -47,6 +51,7 @@ const registerCollege = async (req, res, next) => {
     const college = await College.create({
       name,
       code,
+      verificationStatus: 'pending',
     });
 
     return res.status(201).json({
@@ -54,6 +59,7 @@ const registerCollege = async (req, res, next) => {
       data: {
         college: mapCollege(college),
         created: true,
+        message: 'College submitted for verification. It will appear in the public list after admin approval.',
       },
     });
   } catch (error) {
