@@ -20,6 +20,27 @@ const collegeSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+      index: true,
+    },
+    verificationNote: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Verification note cannot exceed 500 characters'],
+      default: '',
+    },
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    verifiedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
