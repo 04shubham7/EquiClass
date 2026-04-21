@@ -202,3 +202,76 @@ export const routineApi = {
     });
   },
 };
+
+export const adminApi = {
+  getOverview() {
+    return apiRequest('/admin/overview', {
+      method: 'GET',
+    });
+  },
+
+  listColleges({ status = 'all', search = '', page = 1, limit = 20 } = {}) {
+    const query = new URLSearchParams();
+
+    if (status) {
+      query.set('status', status);
+    }
+    if (search) {
+      query.set('search', search);
+    }
+    query.set('page', String(page));
+    query.set('limit', String(limit));
+
+    return apiRequest(`/admin/colleges?${query.toString()}`, {
+      method: 'GET',
+    });
+  },
+
+  verifyCollege(collegeId, { action, note = '' }) {
+    return apiRequest(`/admin/colleges/${collegeId}/verify`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action, note }),
+    });
+  },
+
+  setCollegeActive(collegeId, isActive) {
+    return apiRequest(`/admin/colleges/${collegeId}/active`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isActive }),
+    });
+  },
+
+  listUsers({ search = '', collegeId = '', page = 1, limit = 20 } = {}) {
+    const query = new URLSearchParams();
+
+    if (search) {
+      query.set('search', search);
+    }
+    if (collegeId) {
+      query.set('collegeId', collegeId);
+    }
+    query.set('page', String(page));
+    query.set('limit', String(limit));
+
+    return apiRequest(`/admin/users?${query.toString()}`, {
+      method: 'GET',
+    });
+  },
+
+  listAuditLogs({ action = 'all', search = '', page = 1, limit = 20 } = {}) {
+    const query = new URLSearchParams();
+
+    if (action) {
+      query.set('action', action);
+    }
+    if (search) {
+      query.set('search', search);
+    }
+    query.set('page', String(page));
+    query.set('limit', String(limit));
+
+    return apiRequest(`/admin/audit-logs?${query.toString()}`, {
+      method: 'GET',
+    });
+  },
+};
