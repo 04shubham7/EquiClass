@@ -5,6 +5,7 @@ const validator = require('validator');
 const College = require('../models/College');
 const User = require('../models/User');
 const { CODE_REGEX } = require('../utils/collegeCode');
+const { isGlobalAdminEmail } = require('../middleware/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
@@ -43,6 +44,20 @@ const sendAuthResponse = (res, statusCode, user) => {
 const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
 const normalizeCollegeCode = (code) => String(code || '').trim().toUpperCase();
 
+const ensureGlobalAdminRole = async (user) => {
+  if (!user || !isGlobalAdminEmail(user.email)) {
+    return user;
+  }
+
+  if (Array.isArray(user.roles) && user.roles.includes('global_admin')) {
+    return user;
+  }
+
+  user.roles = Array.from(new Set([...(user.roles || []), 'global_admin']));
+  await user.save();
+  return user;
+};
+
 const resolveCollegeFromInput = async ({ collegeId, collegeCode, requireActive = true }) => {
   if (collegeId) {
     if (!mongoose.Types.ObjectId.isValid(collegeId)) {
@@ -68,7 +83,10 @@ const resolveCollegeFromInput = async ({ collegeId, collegeCode, requireActive =
 
 const listColleges = async (req, res, next) => {
   try {
-    const colleges = await College.find({ isActive: true })
+    const colleges = await College.find({
+      isActive: true,
+      $or: [{ verificationStatus: 'approved' }, { verificationStatus: { $exists: false } }],
+    })
       .select('name code')
       .sort({ name: 1 })
       .limit(500)
@@ -170,6 +188,8 @@ const register = async (req, res, next) => {
       employeeCode: employeeCode ? String(employeeCode).trim() : undefined,
       timezone: timezone ? String(timezone).trim() : 'UTC',
     });
+
+    await ensureGlobalAdminRole(user);
 
     return sendAuthResponse(res, 201, user);
   } catch (error) {
@@ -280,6 +300,7 @@ const login = async (req, res, next) => {
       });
     }
 
+    await ensureGlobalAdminRole(user);
     user.lastLoginAt = new Date();
     await user.save();
 
